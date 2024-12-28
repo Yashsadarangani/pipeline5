@@ -3,6 +3,7 @@ pipeline {
     
     environment {
         SONARQUBE_SCANNER = 'sonarscanner' // Name of your SonarQube scanner
+        PATH = "${PATH};C:\\Windows\\System32"
     }
 
     stages {
