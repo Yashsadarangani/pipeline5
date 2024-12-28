@@ -25,7 +25,7 @@ pipeline {
                 bat '''
                 set PATH=%PYTHON_PATH%;%PATH%
                 echo "Running tests with coverage..."
-                coverage run --source=. test_unit.py
+                coverage run --source=. test.py
                 coverage xml -o coverage.xml
                 if exist coverage.xml (
                     echo "Coverage report generated successfully."
