@@ -1,54 +1,78 @@
 pipeline {
     agent any
-    
     environment {
-        SONARQUBE_SCANNER = 'sonarscanner' // Name of your SonarQube scanner
         PATH = "${PATH};C:\\Windows\\System32"
+        PYTHON_PATH = 'C:\\Users\\LENOVO\\AppData\\Local\\Programs\\Python\\Python313;C:\\Users\\LENOVO\\AppData\\Local\\Programs\\Python\\Python313\\Scripts'
     }
-
     stages {
-        stage('Install Dependencies') {
+        stage('Checkout') {
             steps {
-              bat 'pip install coverage'
+                checkout scm
             }
         }
 
-        stage('Run Tests with Coverage') {
+        stage('Verify Coverage Installation') {
             steps {
-               bat '''
-               coverage run -m unittest discover
-               coverage xml -o coverage.xml
-              '''
+                bat '''
+                set PATH=%PYTHON_PATH%;%PATH%
+                pip show coverage
+                '''
+            }
+        }
+
+        stage('Run Unit Tests and Generate Coverage') {
+            steps {
+                bat '''
+                set PATH=%PYTHON_PATH%;%PATH%
+                echo "Running tests with coverage..."
+                coverage run --source=. test_unit.py
+                coverage xml -o coverage.xml
+                if exist coverage.xml (
+                    echo "Coverage report generated successfully."
+                ) else (
+                    echo "Error: Coverage report not found!"
+                    exit /b 1
+                )
+                '''
+            }
+        }
+
+        stage('Ensure Correct Working Directory') {
+            steps {
+                bat '''
+                set PATH=%PYTHON_PATH%;%PATH%
+                echo "Current working directory: %cd%"
+                dir
+                '''
             }
         }
 
         stage('SonarQube Analysis') {
+            environment {
+                SONAR_TOKEN = credentials('sonarqube-credentials') // Accessing the SonarQube token stored in Jenkins credentials
+            }
             steps {
-                withSonarQubeEnv('sonarqube-server') { // Match the server name configured in Jenkins
-                    bat '''
-                    sonar-scanner.bat ^
-                    -Dsonar.projectKey=pipeline5 ^
-                    -Dsonar.sources=. ^
-                    -Dsonar.host.url=http://localhost:9000 ^
-                    -Dsonar.token=sqa_e0d66921a5e37d4859d748d025d4fe0c23afcbc7 ^
-                    -Dsonar.python.coverage.reportPaths=coverage.xml
-                    '''
-                }
+                bat '''
+                set PATH=%PYTHON_PATH%;%PATH%
+                sonar-scanner -Dsonar.projectKey=pipeline5 ^
+                              -Dsonar.projectName=pipeline5 ^
+                              -Dsonar.sources=. ^
+                              -Dsonar.python.coverage.reportPaths=coverage.xml ^
+                              -Dsonar.host.url=http://localhost:9000 ^
+                              -Dsonar.token=%SONAR_TOKEN%
+                '''
             }
         }
     }
-    
     post {
-        always {
-            script {
-                echo 'Pipeline Completed'
-            }
+        success {
+            echo 'Pipeline completed successfully'
         }
         failure {
-            echo 'Pipeline Failed'
+            echo 'Pipeline failed'
         }
-        success {
-            echo 'Pipeline Succeeded'
+        always {
+            echo 'This runs regardless of the result.'
         }
     }
 }
