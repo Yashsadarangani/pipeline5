@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         PATH = "${PATH};C:\\Windows\\System32"
-        PYTHON_PATH = 'C:\\Users\\LENOVO\\AppData\\Local\\Programs\\Python\\Python313;C:\\Users\\LENOVO\\AppData\\Local\\Programs\\Python\\Python313\\Scripts'
+        PYTHON_PATH = 'C:\\Users\\Yashu Kun\\AppData\\Local\\Programs\\Python\\Python312;C:\\Users\\Yashu Kun\\AppData\\Local\\Programs\\Python\\Python312\\Scripts'
     }
     stages {
         stage('Checkout') {
@@ -48,9 +48,7 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
-            environment {
-                SONAR_TOKEN = credentials('sonarqube-credentials') // Accessing the SonarQube token stored in Jenkins credentials
-            }
+
             steps {
                 bat '''
                 set PATH=%PYTHON_PATH%;%PATH%
@@ -59,7 +57,7 @@ pipeline {
                               -Dsonar.sources=. ^
                               -Dsonar.python.coverage.reportPaths=coverage.xml ^
                               -Dsonar.host.url=http://localhost:9000 ^
-                              -Dsonar.token=%SONAR_TOKEN%
+                              -Dsonar.token=sqa_e0d66921a5e37d4859d748d025d4fe0c23afcbc7
                 '''
             }
         }
